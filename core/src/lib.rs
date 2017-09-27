@@ -37,3 +37,13 @@ pub type Mat4 = cgmath::Matrix4<f64>;
 
 pub type HashMap<K, V> = fnv::FnvHashMap<K, V>;
 pub type HashSet<K> = fnv::FnvHashSet<K>;
+
+pub fn clamp<T : PartialOrd>(n:T, min:T, max:T) -> T {
+    if n < min {
+        min
+    } else if n > max {
+        max
+    } else {
+        n
+    }
+}

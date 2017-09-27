@@ -1,6 +1,9 @@
 pub mod dimensions;
 pub mod input;
 pub mod camera;
+pub mod gfx;
+pub mod texture_array;
+pub mod texture_region;
 
 use image::Rgba;
 use puck_core::color::Color;
