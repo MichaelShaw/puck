@@ -10,12 +10,17 @@ extern crate tokio_io;
 extern crate futures;
 extern crate bytes;
 
+extern crate cgmath;
+
+extern crate fnv;
+
 pub mod event;
 pub mod network;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-    }
-}
+
+pub type Vec3 = cgmath::Vector3<f64>;
+pub type Vec3f = cgmath::Vector3<f32>;
+
+
+pub type HashMap<K, V> = fnv::FnvHashMap<K, V>;
+pub type HashSet<K> = fnv::FnvHashSet<K>;

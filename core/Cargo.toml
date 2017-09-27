@@ -13,3 +13,10 @@ tokio-core = "0.1"
 tokio-io = "0.1"
 futures = "0.1"
 bytes = "*"
+
+time = "0.1"
+
+fnv = "1.0.5"
+
+rand = "0.3"
+cgmath = "0.15"
