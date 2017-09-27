@@ -18,6 +18,7 @@ pub mod event;
 pub mod network;
 pub mod color;
 pub mod math;
+pub mod app;
 
 pub use color::*;
 

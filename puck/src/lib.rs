@@ -12,6 +12,7 @@ extern crate glutin;
 
 pub mod audio;
 pub mod render;
+pub mod app;
 
 use std::io;
 use std::path::PathBuf;
