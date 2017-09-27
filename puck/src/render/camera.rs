@@ -3,7 +3,7 @@ extern crate cgmath;
 use puck_core::{Mat4, Vec3, Vec4};
 use puck_core::math::LineSegment;
 use cgmath::*;
-use super::dimensions::Dimensions;
+use dimensions::Dimensions;
 
 use cgmath::SquareMatrix;
 

@@ -1,5 +1,3 @@
-pub mod dimensions;
-pub mod input;
 pub mod camera;
 pub mod gfx;
 pub mod texture_array;

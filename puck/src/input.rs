@@ -6,7 +6,7 @@ pub use glutin::MouseButton;
 pub use glutin::VirtualKeyCode;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MouseState {
+pub struct Mouse {
     pub at: (i32, i32), // could make this optional for off screen? might be a stupid idea.
 
     pub down: HashSet<glutin::MouseButton>,
@@ -16,7 +16,7 @@ pub struct MouseState {
     pub mouse_wheel_delta: i32, // we multiply the float delta by 100 and round it
 }
 
-impl MouseState {
+impl Mouse {
     pub fn left_pushed(&self) -> bool {
         self.pushed.contains(&glutin::MouseButton::Left)
     }
@@ -43,16 +43,16 @@ impl MouseState {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct KeyState {
+pub struct Keys {
     pub down: HashSet<glutin::VirtualKeyCode>,
     pub pushed: HashSet<glutin::VirtualKeyCode>,
     pub released: HashSet<glutin::VirtualKeyCode>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct InputState {
-    pub mouse:MouseState,
-    pub keys:KeyState,
+pub struct Input{
+    pub mouse:Mouse,
+    pub keys:Keys,
     pub close:bool,
 }
 
@@ -72,7 +72,7 @@ pub fn is_close_event(event: &glutin::Event) -> bool {
     }
 }
 
-pub fn produce(input:&InputState, events: &Vec<glutin::Event>) -> InputState {
+pub fn produce(input:&Input, events: &Vec<glutin::Event>) -> Input {
     let mut next_input = input.clone();
 
     next_input.keys.pushed.clear();
@@ -145,17 +145,17 @@ pub fn produce(input:&InputState, events: &Vec<glutin::Event>) -> InputState {
     next_input
 }
 
-impl InputState {
-    pub fn default() -> InputState {
-        InputState {
-            mouse: MouseState {
+impl Input{
+    pub fn default() -> Input {
+        Input{
+            mouse: Mouse {
                 at: (0, 0),
                 down: HashSet::new(),
                 pushed: HashSet::new(),
                 released: HashSet::new(),
                 mouse_wheel_delta: 0,
             },
-            keys: KeyState {
+            keys: Keys {
                 down: HashSet::new(),
                 pushed: HashSet::new(),
                 released: HashSet::new(),
