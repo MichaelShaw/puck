@@ -47,7 +47,7 @@ impl SoundEngine {
             Preload(sounds) => {
                 for (sound_name, gain) in sounds {
                     match context.preload(&sound_name, gain) {
-                        Ok(buffers) => (),
+                        Ok(_) => (),
                         Err(err) => {
                             println!("Sound Worker failed to preload {:?} err -> {:?}", sound_name, err);
                             ()

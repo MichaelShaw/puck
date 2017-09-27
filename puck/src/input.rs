@@ -91,7 +91,7 @@ pub fn produce(input:&Input, events: &Vec<glutin::Event>) -> Input {
         match event {
             &Event::WindowEvent { ref event, .. } => {
                 match event {
-                    &WindowEvent::Resized(width, height) => {},
+                    &WindowEvent::Resized(_, _) => {},
                     &WindowEvent::KeyboardInput { input: KeyboardInput { virtual_keycode: Some(key_code), state, .. }, .. } => {
                         match state {
                             ElementState::Pressed => {

@@ -43,7 +43,7 @@ pub trait RenderedApp : App {
     type RenderEvent : Clone + Debug + Eq + Ord;
     type RenderState;
 
-    fn handle_input(input:&Input, dimensions: u32, state: &HashMap<Self::Id, Self::Entity>) -> Vec<Self::Event>;
+    fn handle_input(input:&Input, dimensions: &Dimensions, state: &HashMap<Self::Id, Self::Entity>) -> Vec<Self::Event>;
 //    fn simulate(time:Time, state:&HashMap<Self::Id, Self::Entity>, entity: &Self::Entity) -> Vec<Self::Event>;
 
     fn handle_render_event(event: Self::Event, &mut Self::RenderState);
