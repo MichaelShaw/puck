@@ -12,7 +12,6 @@ pub mod codec;
 pub mod server;
 
 
-
 #[derive(Debug)]
 pub enum PuckNetworkError {
     IO(io::Error)
