@@ -1,0 +1,6 @@
+[package]
+name = "puck_core"
+version = "0.1.0"
+authors = ["Michael Shaw <michaeljshaw@gmail.com>"]
+
+[dependencies]

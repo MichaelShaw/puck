@@ -1,0 +1,8 @@
+[workspace]
+members = ["core", "puck"]
+
+[profile.dev]
+debug = true
+
+[profile.release]
+lto = true
