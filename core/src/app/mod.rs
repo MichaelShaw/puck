@@ -28,8 +28,8 @@ pub struct SimSettings {
 pub trait App {
     type Id : Clone + Hash + Debug + Eq + Ord + Serialize + DeserializeOwned;
     type Entity : Clone + Debug + Serialize + DeserializeOwned; // do we need Eq?
-    type EntityEvent : Clone + Debug + Eq + Ord + Serialize + DeserializeOwned;
-    type RenderEvent : Clone + Debug + Eq + Ord + Serialize + DeserializeOwned;
+    type EntityEvent : Clone + Debug + Eq + PartialOrd + Serialize + DeserializeOwned;
+    type RenderEvent : Clone + Debug + Eq + PartialOrd + Serialize + DeserializeOwned;
 
     fn handle_entity_event(event:&Self::EntityEvent, entity: &mut Self::Entity) -> Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>;
     fn simulate(time:Tick, entities:&Map<Self::Id, Self::Entity>, id: &Self::Id, entity: &Self::Entity) -> (Vec<Self::EntityEvent>, Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>);
