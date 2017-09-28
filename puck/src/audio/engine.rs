@@ -26,7 +26,6 @@ pub enum SoundEngineUpdate {
 // we need our state of what's already persisted, loans etc.
 
 pub struct SoundEngine {
-    // some measure of time
     // some notion of existing sounds
     pub last_render_time: u64,
     pub loans : HashMap<String, SoundSourceLoan>,

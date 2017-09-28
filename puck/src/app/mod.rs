@@ -1,20 +1,18 @@
 pub mod runner;
 
-use puck_core::{HashMap, Tick};
+//use puck_core::{HashMap, Tick};
 use puck_core::app::{Event, App};
 use input::Input;
+use audio::SoundRender;
 
-use std::hash::Hash;
-use std::fmt::Debug;
+//use std::hash::Hash;
+//use std::fmt::Debug;
 
-use std::collections::BTreeMap;
+use std::collections::BTreeMap as Map;
 
-use dimensions::Dimensions;
+use {RenderTick, Dimensions};
 
-use render::gfx::{Renderer, construct_opengl_renderer};
-use gfx;
-use FileResources;
-use PuckResult;
+use render::gfx::{OpenGLRenderer};
 
 // - abstract trait of EventSink?
 // - how do we manage identifiers? ... across kinds?
@@ -40,8 +38,8 @@ pub struct RenderSettings {
 pub trait RenderedApp : App {
     type RenderState;
 
-    fn handle_input(input:&Input, dimensions: &Dimensions, state: &HashMap<Self::Id, Self::Entity>) -> Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>;
-    fn handle_render_event(event: &Self::RenderEvent, &mut Self::RenderState);
-    fn render(state:&HashMap<Self::Id, Self::Entity>, &mut Self::RenderState);
+    fn handle_input(input:&Input, dimensions: &Dimensions, entities: &Map<Self::Id, Self::Entity>) -> Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>;
+    fn handle_render_event(event: &Self::RenderEvent, render_state: &mut Self::RenderState);
+    fn render(time: RenderTick, entities:&Map<Self::Id, Self::Entity>, render_state: &mut Self::RenderState, renderer: &mut OpenGLRenderer) -> SoundRender;
 }
 

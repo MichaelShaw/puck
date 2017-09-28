@@ -215,7 +215,7 @@ impl<F> Renderer<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer, F, gfx_
         }
     }
 
-    fn draw_raw(&mut self, geometry: &GeometryBuffer<gfx_device_gl::Resources>, uniforms: Uniforms, blend:Blend)  -> PuckResult<()> {
+    fn draw_raw(&mut self, geometry: &GeometryBuffer<gfx_device_gl::Resources>, uniforms: Uniforms, blend:Blend) -> PuckResult<()> {
 //        let tv = match texture_array {
 //            TextureArraySource::UI => &self.ui.texture_view,
 //            TextureArraySource::Primary => self.texture.as_ref().map(|&(_, ref v)| v).ok_or(JamError::NoTexture())?,

@@ -12,6 +12,7 @@ use serde::de::DeserializeOwned;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Event<Id, Entity, EntityEvent, RenderEvent>  {
+    Shutdown,
     SpawnEvent(Id, Entity),
     Delete(Id),
     DeleteRange(Id, Id),
@@ -21,7 +22,7 @@ pub enum Event<Id, Entity, EntityEvent, RenderEvent>  {
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct SimSettings {
-    pub ticks_per_second: u64,
+    pub tick_rate: u64,
 }
 
 pub trait App {
@@ -31,5 +32,5 @@ pub trait App {
     type RenderEvent : Clone + Debug + Eq + Ord + Serialize + DeserializeOwned;
 
     fn handle_entity_event(event:&Self::EntityEvent, entity: &mut Self::Entity) -> Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>;
-    fn simulate(time:Tick, state:&Map<Self::Id, Self::Entity>, id: &Self::Id, entity: &Self::Entity) -> (Vec<Self::EntityEvent>, Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>);
+    fn simulate(time:Tick, entities:&Map<Self::Id, Self::Entity>, id: &Self::Id, entity: &Self::Entity) -> (Vec<Self::EntityEvent>, Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>);
 }

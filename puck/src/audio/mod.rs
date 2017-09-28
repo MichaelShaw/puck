@@ -12,6 +12,9 @@ pub mod context;
 pub mod source;
 pub mod worker;
 
+pub use self::engine::*;
+pub use self::worker::*;
+
 pub type SoundName = String;
 
 pub type SoundEventId = u64;

@@ -65,3 +65,9 @@ impl From<io::Error> for PuckError {
     }
 }
 
+#[derive(Copy, Clone)]
+pub struct RenderTick {
+    pub n: u64,
+    pub accu_alpha: f64, // percentage of a frame that has accumulated
+    pub tick_rate: u64, // per second
+}
