@@ -70,9 +70,15 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
                 tick_rate: sim_settings.tick_rate, // per second
             };
 
+//            last_entities = entities;
+
+            let whatever : TreeMap<_,_> = entities.iter().map(|(id, e)| (id, e.clone())).collect();
+
             for (id, entity) in entities.iter() {
                 let (self_events, route_events) = RA::simulate(simulate_tick, &entities, id, entity);
-
+                for ev in self_events {
+//                    RA::handle_entity_event()
+                }
             }
 
             tick += 1;

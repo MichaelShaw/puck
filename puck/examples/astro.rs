@@ -12,7 +12,7 @@ use puck_core::{Vec2, Vec3f, Tick, HashMap};
 use puck_core::app::{TreeMap, App, Event, SimSettings};
 use puck::app::{RenderedApp, RenderSettings};
 use puck::{FileResources, RenderTick, Input, Dimensions};
-use puck::audio::{SoundRender, Listener};
+use puck::audio::{SoundRender, Listener, SoundEvent};
 use puck::render::gfx::OpenGLRenderer;
 
 use std::hash::Hash;
@@ -55,8 +55,7 @@ pub fn main() {
     let sim_settings = SimSettings { tick_rate: 60 };
     let render_settings = RenderSettings { dimensions: (640, 480), vsync: false, title: "Astroblasto!".into() };
 
-    let run_result = puck::app::runner::run::<AstroApp>(file_resources, sim_settings, render_settings, ());
-
+    let run_result = puck::app::runner::run::<AstroApp>(file_resources, sim_settings, render_settings, Vec::new());
 }
 
 struct AstroApp();
@@ -65,7 +64,7 @@ impl App for AstroApp {
     type Id = Id;
     type Entity = Entity; // do we need Eq?
     type EntityEvent = EntityEvent;
-    type RenderEvent = ();
+    type RenderEvent = SoundEvent;
 
     fn handle_entity_event(event:&Self::EntityEvent, entity: &mut Self::Entity) -> Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>> {
         Vec::new()
@@ -77,17 +76,19 @@ impl App for AstroApp {
 }
 
 impl RenderedApp for AstroApp {
-    type RenderState = ();
+    type RenderState = Vec<SoundEvent>;
 
     fn handle_input(input:&Input, dimensions: &Dimensions, entities: &TreeMap<Self::Id, Self::Entity>) -> Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>> {
         Vec::new()
     }
 
     fn handle_render_event(event: &Self::RenderEvent, render_state: &mut Self::RenderState) {
-
+        render_state.push(event.clone());
     }
 
     fn render(time: RenderTick, entities:&TreeMap<Self::Id, Self::Entity>, render_state: &mut Self::RenderState, renderer: &mut OpenGLRenderer) -> SoundRender {
+
+        let out = render_state.split_off(0);
         SoundRender {
             master_gain: 1.0,
             sounds: Vec::new(),

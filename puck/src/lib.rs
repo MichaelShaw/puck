@@ -16,6 +16,10 @@ extern crate glutin;
 
 extern crate rayon;
 
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+
 pub mod audio;
 pub mod render;
 pub mod app;

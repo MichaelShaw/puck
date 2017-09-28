@@ -23,7 +23,7 @@ pub type Gain = f32;
 
 pub type DistanceModel = alto::DistanceModel;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SoundEvent {
     pub name: String,
     pub position: Vec3f,
@@ -33,7 +33,7 @@ pub struct SoundEvent {
     pub loop_sound: bool,
 }
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Listener {
     pub position: Vec3f,
     pub velocity: Vec3f,
