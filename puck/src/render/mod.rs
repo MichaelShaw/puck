@@ -2,6 +2,7 @@ pub mod gfx;
 pub mod texture_array;
 pub mod texture_region;
 pub mod shader;
+pub mod quads;
 
 pub use self::shader::*;
 pub use self::texture_array::*;
@@ -25,7 +26,8 @@ pub fn down_size_m4(arr: [[f64; 4];4]) -> [[f32; 4]; 4] {
     out
 }
 
-pub type BufferData = Vec<self::gfx::Vertex>;
+pub type Vertex = self::gfx::Vertex;
+pub type BufferData = Vec<Vertex>;
 pub type Transform = [[f32; 4]; 4];
 
 #[derive(Copy, Clone, Debug)]
