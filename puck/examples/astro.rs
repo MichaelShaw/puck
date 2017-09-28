@@ -9,9 +9,9 @@ extern crate serde;
 use cgmath::Zero;
 
 use puck_core::{Vec2, Vec3f, Tick, HashMap};
-use puck_core::app::{TreeMap, App, Event};
-use puck::app::{RenderedApp};
-use puck::{RenderTick, Input, Dimensions};
+use puck_core::app::{TreeMap, App, Event, SimSettings};
+use puck::app::{RenderedApp, RenderSettings};
+use puck::{FileResources, RenderTick, Input, Dimensions};
 use puck::audio::{SoundRender, Listener};
 use puck::render::gfx::OpenGLRenderer;
 
@@ -51,6 +51,12 @@ pub enum EntityEvent {
 
 pub fn main() {
     println!("astroblasto");
+    let file_resources = FileResources::default_relative();
+    let sim_settings = SimSettings { tick_rate: 60 };
+    let render_settings = RenderSettings { dimensions: (640, 480), vsync: false, title: "Astroblasto!".into() };
+
+    let run_result = puck::app::runner::run::<AstroApp>(file_resources, sim_settings, render_settings, ());
+
 }
 
 struct AstroApp();

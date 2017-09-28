@@ -57,3 +57,23 @@ pub struct Tick {
     pub tick_duration: f64,
     pub tick_rate: u64, // per second
 }
+
+
+
+#[macro_export]
+macro_rules! hashset {
+    ($($val: expr ),*) => {{
+         let mut set = HashSet::default();
+         $( set.insert( $val); )*
+         set
+    }}
+}
+
+#[macro_export]
+macro_rules! hashmap {
+    ($( $key: expr => $val: expr ),*) => {{
+         let mut map = HashMap::default();
+         $( map.insert($key, $val); )*
+         map
+    }}
+}

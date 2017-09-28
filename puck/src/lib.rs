@@ -1,4 +1,5 @@
 extern crate cgmath;
+#[macro_use]
 extern crate puck_core;
 extern crate alto;
 extern crate lewton;

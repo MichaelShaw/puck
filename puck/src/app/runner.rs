@@ -24,7 +24,7 @@ pub struct ReneredAppRunner<RA, R, C, F, D> where RA : RenderedApp,
 
 pub const NANOSECONDS_IN_A_SECOND : u64 = 1_000_000_000u64;
 
-pub fn run<RA>(app: RA, file_resources:FileResources, sim_settings: SimSettings, render_settings:RenderSettings, render_state: RA::RenderState) -> PuckResult<()> where RA : RenderedApp {
+pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_settings:RenderSettings, render_state: RA::RenderState) -> PuckResult<()> where RA : RenderedApp {
     let mut renderer = construct_opengl_renderer(file_resources, render_settings.dimensions, render_settings.vsync, &render_settings.title)?;
 
     // start file watcher
@@ -48,7 +48,11 @@ pub fn run<RA>(app: RA, file_resources:FileResources, sim_settings: SimSettings,
         // check file watcher shit
 
         let (dimensions, input) = renderer.begin_frame(false, false);
+
+
         let time = time::precise_time_ns();
+
+
         let since_start_ns = time - start_time;
         let time_delta_ns = time - last_time;
 
@@ -82,6 +86,11 @@ pub fn run<RA>(app: RA, file_resources:FileResources, sim_settings: SimSettings,
             tick_rate: sim_settings.tick_rate, // per second
         };
         RA::render(render_tick, &entities, &mut rs, &mut renderer);
+
+        if input.close {
+            break 'main;
+
+        }
     }
 
 

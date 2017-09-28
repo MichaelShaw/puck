@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::path::Path;
 
+use puck_core::HashSet;
 
 use std::fs::{self, File};
 use std::io::{self, Read};
@@ -36,6 +37,22 @@ impl FileResources {
         }
 
         reload
+    }
+
+    pub fn default_relative() -> FileResources {
+        let resources_path = PathBuf::from("resources");
+        let shader_pair = ShaderPair::for_paths("resources/shader/fat.vert", "resources/shader/fat.frag");
+        let texture_dir = TextureDirectory::for_path("resources/textures", hashset!["png".into()]);
+        let font_dir = PathBuf::from("resources/fonts");
+        let sound_dir = PathBuf::from("resources/sound");
+
+        FileResources {
+            resources: resources_path,
+            shader_pair,
+            texture_directory: texture_dir,
+            font_directory: font_dir,
+            sound_directory: sound_dir,
+        }
     }
 }
 
