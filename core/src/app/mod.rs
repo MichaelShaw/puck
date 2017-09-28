@@ -1,3 +1,5 @@
+pub mod runner;
+
 use std::fmt::Debug;
 
 use std::collections::BTreeMap as Map;
@@ -15,6 +17,11 @@ pub enum Event<Id, Entity, EntityEvent, RenderEvent>  {
     DeleteRange(Id, Id),
     EntityEvent(Id, EntityEvent),
     RenderEvent(RenderEvent),
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct SimSettings {
+    pub ticks_per_second: u64,
 }
 
 pub trait App {

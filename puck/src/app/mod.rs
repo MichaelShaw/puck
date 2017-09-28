@@ -1,3 +1,5 @@
+pub mod runner;
+
 use puck_core::{HashMap, Tick};
 use puck_core::app::{Event, App};
 use input::Input;
@@ -34,10 +36,6 @@ pub struct RenderSettings {
     pub title: String,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub struct SimSettings {
-    pub ticks_per_second: u64,
-}
 
 pub trait RenderedApp : App {
     type RenderState;
@@ -47,19 +45,3 @@ pub trait RenderedApp : App {
     fn render(state:&HashMap<Self::Id, Self::Entity>, &mut Self::RenderState);
 }
 
-pub struct ReneredAppRunner<RA, R, C, F, D> where RA : RenderedApp,
-                                                  R : gfx::Resources,
-                                                  C : gfx::CommandBuffer<R>,
-                                                  F : gfx::Factory<R>,
-                                                  D : gfx::Device {
-    entities: BTreeMap<RA::Id, RA::Entity>,
-    renderer: Renderer<R, C, F, D>,
-    render_state: RA::RenderState,
-}
-
-pub fn run<RA>(app: RA, file_resources:FileResources, sim_settings: SimSettings, render_settings:RenderSettings, render_state: RA::RenderState) -> PuckResult<()> where RA : RenderedApp {
-    let renderer = construct_opengl_renderer(file_resources, render_settings.dimensions, render_settings.vsync, &render_settings.title)?;
-
-
-    Ok(())
-}
