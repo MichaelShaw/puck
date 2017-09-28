@@ -32,7 +32,7 @@ impl TextureDirectory {
         let mut paths = read_directory_paths(&self.path)?;
         paths.sort();
 
-        println!("sorted paths -> {:?}", paths);
+//        println!("sorted paths -> {:?}", paths);
 
         for path in paths {
             if let Some(extension) = path.extension().and_then(|p| p.to_str()).map(|s|s.to_lowercase()) {
