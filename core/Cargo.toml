@@ -19,6 +19,6 @@ time = "0.1"
 fnv = "1.0.5"
 
 rand = "0.3"
-cgmath = "0.15"
+cgmath = { version = "0.15", features = ["serde"] }
 
 rayon = "0.8"
