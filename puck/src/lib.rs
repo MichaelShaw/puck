@@ -6,9 +6,11 @@ extern crate time;
 extern crate notify;
 extern crate rand;
 extern crate image;
+
 #[macro_use]
 extern crate gfx;
-
+extern crate gfx_device_gl;
+extern crate gfx_window_glutin;
 extern crate glutin;
 
 pub mod audio;
@@ -16,6 +18,13 @@ pub mod render;
 pub mod app;
 pub mod input;
 pub mod dimensions;
+pub mod camera;
+pub mod resources;
+
+pub use input::*;
+pub use camera::*;
+pub use dimensions::*;
+pub use resources::*;
 
 use std::io;
 use std::path::PathBuf;
