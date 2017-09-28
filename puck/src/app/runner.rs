@@ -120,6 +120,7 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
                     }
                 }
 
+                // simulate entity
                 let (self_events, mut route_events) = RA::simulate(simulate_tick, &last_entities, id, &entity);
 
                 to_route.append(&mut route_events);
@@ -144,6 +145,11 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
             accu_alpha: (simulation_accu_ns as f64) / (per_tick_ns as f64), // percentage of a frame that has accumulated
             tick_rate: sim_settings.tick_rate, // per second
         };
+
+        for render_event in render_events {
+            RA::handle_render_event(&render_event, &mut rs);
+        }
+        render_events = Vec::new();
         RA::render(render_tick, &entities, &mut rs, &mut renderer);
 
         if input.close {
