@@ -1,7 +1,15 @@
 use std::path::PathBuf;
+use std::path::Path;
+
+
+use std::fs::{self, File};
+use std::io::{self, Read};
+
 
 use render::shader::ShaderPair;
 use render::TextureDirectory;
+
+use PuckResult;
 
 pub struct FileResources {
     pub resources: PathBuf,
@@ -18,8 +26,12 @@ impl FileResources {
         for path in paths {
             if self.shader_pair.contains(&path) {
                 reload.shader = true;
-            } else if self.texture_directory.contains(&path) {
+            } else if path_contains(self.texture_directory.path.as_path(), path) {
                 reload.texture = true;
+            } else if path_contains(self.sound_directory.as_path(), path) {
+                reload.sound = true;
+            } else if path_contains(self.font_directory.as_path(), path) {
+                reload.font = true;
             }
         }
 
@@ -43,4 +55,34 @@ impl Reload {
             sound: false,
         }
     }
+}
+
+
+pub fn path_contains(parent_path:&Path, path:&Path) -> bool {
+    use std::path;
+    let my_components : Vec<path::Component> = parent_path.components().collect();
+    let components : Vec<path::Component> = path.components().collect();
+
+    components.windows(my_components.len()).position(|window| {
+        window == &my_components[..]
+    }).is_some()
+}
+
+pub fn read_directory_paths(path:&Path) -> PuckResult<Vec<PathBuf>> {
+    let mut paths : Vec<PathBuf> = Vec::new();
+
+    for entry in try!(fs::read_dir(path)) {
+        let entry = try!(entry);
+        let file_path = entry.path().to_path_buf();
+        paths.push(file_path);
+    }
+
+    Ok(paths)
+}
+
+pub fn load_file_contents(path:&Path) -> io::Result<Vec<u8>> {
+    let mut file = File::open(path)?;
+    let mut buffer : Vec<u8> = Vec::new();
+    file.read_to_end(&mut buffer)?;
+    Ok(buffer)
 }

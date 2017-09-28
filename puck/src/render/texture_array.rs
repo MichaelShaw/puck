@@ -1,11 +1,11 @@
-use std::fs;
-use std::path::{Path,PathBuf};
+use std::path::{PathBuf};
 use std::fmt;
 
 use image;
 use image::{GenericImage, RgbaImage};
 
 use puck_core::HashSet;
+use read_directory_paths;
 
 use PuckResult;
 use PuckError;
@@ -29,7 +29,7 @@ impl TextureDirectory {
 
         let mut dimensions : Option<Dimensions> = None;
 
-        let mut paths = try!(read_directory_paths(&self.path));
+        let mut paths = read_directory_paths(&self.path)?;
         paths.sort();
 
         println!("sorted paths -> {:?}", paths);
@@ -39,7 +39,7 @@ impl TextureDirectory {
                 // let ext : String = extension.into();
                 if self.extensions.contains(&extension) {
                     println!("path -> {:?} with extension -> {:?}", path, extension);
-                    let img = try!(image::open(path.clone()));
+                    let img = image::open(path.clone())?;
 
                     let d = img.dimensions();
                     let w = d.0 as u32;
@@ -72,28 +72,9 @@ impl TextureDirectory {
         }
     }
 
-    pub fn contains(&self, path:&Path) -> bool {
-        use std::path;
-        let my_components : Vec<path::Component> = self.path.components().collect();
-        let components : Vec<path::Component> = path.components().collect();
 
-        components.windows(my_components.len()).position(|window| {
-            window == &my_components[..]
-        }).is_some()
-    }
 }
 
-pub fn read_directory_paths(path:&Path) -> PuckResult<Vec<PathBuf>> {
-    let mut paths : Vec<PathBuf> = Vec::new();
-
-    for entry in try!(fs::read_dir(path)) {
-        let entry = try!(entry);
-        let file_path = entry.path().to_path_buf();
-        paths.push(file_path);
-    }
-
-    Ok(paths)
-}
 
 type Dimensions = (u32, u32); // rename this as TextureDimensions?
 

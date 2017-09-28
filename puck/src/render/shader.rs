@@ -1,7 +1,7 @@
-use std::io;
 use std::path::{PathBuf, Path};
-use std::fs::File;
-use std::io::Read;
+
+
+use load_file_contents;
 
 use PuckResult;
 
@@ -9,13 +9,6 @@ use PuckResult;
 pub struct ShaderPair {
     pub vertex_path: PathBuf,
     pub fragment_path: PathBuf,
-}
-
-fn load_file_contents(path:&Path) -> io::Result<Vec<u8>> {
-    let mut file = File::open(path)?;
-    let mut buffer : Vec<u8> = Vec::new();
-    file.read_to_end(&mut buffer)?;
-    Ok(buffer)
 }
 
 impl ShaderPair {

@@ -24,3 +24,19 @@ pub fn down_size_m4(arr: [[f64; 4];4]) -> [[f32; 4]; 4] {
 
     out
 }
+
+pub type BufferData = Vec<self::gfx::Vertex>;
+pub type Transform = [[f32; 4]; 4];
+
+#[derive(Copy, Clone, Debug)]
+pub struct Uniforms {
+    pub transform : Transform,
+    pub color: Color,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum Blend {
+    None,
+    Add,
+    Alpha,
+}

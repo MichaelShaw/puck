@@ -22,6 +22,8 @@ use dimensions::Dimensions;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Event<Id, Entity, EntityEvent, RenderEvent>  {
     SpawnEvent(Id, Entity),
+    Delete(Id),
+    DeleteRange(Id, Id),
     EntityEvent(Id, EntityEvent),
     RenderEvent(RenderEvent),
 }

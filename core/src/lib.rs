@@ -48,3 +48,10 @@ pub fn clamp<T : PartialOrd>(n:T, min:T, max:T) -> T {
         n
     }
 }
+
+#[derive(Copy, Clone)]
+pub struct Tick {
+    pub n: u64,
+    pub duration: f64,
+    pub tick_rate: u64, // per second
+}
