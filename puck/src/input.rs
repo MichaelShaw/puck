@@ -145,7 +145,7 @@ pub fn produce(input:&Input, events: &Vec<glutin::Event>) -> Input {
     next_input
 }
 
-impl Input{
+impl Input {
     pub fn default() -> Input {
         Input{
             mouse: Mouse {
