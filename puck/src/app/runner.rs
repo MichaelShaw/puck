@@ -1,14 +1,16 @@
 use gfx;
 use time;
+use multimap::MultiMap;
+
 use std::collections::BTreeMap as TreeMap;
 
 use render::gfx::{Renderer, construct_opengl_renderer};
 
 use {PuckResult, FileResources, RenderTick};
-use puck_core::app::SimSettings;
+use puck_core::app::{SimSettings, Event};
 use puck_core::Tick;
 use super::{RenderedApp, RenderSettings};
-
+use std::collections::Bound::Included;
 
 
 pub struct ReneredAppRunner<RA, R, C, F, D> where RA : RenderedApp,
@@ -44,7 +46,12 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
 
     let per_tick_ns = NANOSECONDS_IN_A_SECOND / sim_settings.tick_rate;
 
-    'main: loop {
+    let mut to_route : Vec<_> = Vec::new();
+    let mut render_events : Vec<_> = Vec::new();
+
+    let mut running = true;
+
+    while running {
         // check file watcher shit
 
         let (dimensions, input) = renderer.begin_frame(false, false);
@@ -58,7 +65,8 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
 
         simulation_accu_ns += time_delta_ns;
 
-        let events = RA::handle_input(&input, &dimensions, &entities);
+        let mut input_events = RA::handle_input(&input, &dimensions, &entities);
+        to_route.append(&mut input_events);
 
         // ROUTE THE EVENTS
 
@@ -70,16 +78,61 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
                 tick_rate: sim_settings.tick_rate, // per second
             };
 
-//            last_entities = entities;
+            last_entities = entities;
 
-            let whatever : TreeMap<_,_> = entities.iter().map(|(id, e)| (id, e.clone())).collect();
+            let mut entity_events = MultiMap::new();
 
-            for (id, entity) in entities.iter() {
-                let (self_events, route_events) = RA::simulate(simulate_tick, &entities, id, entity);
-                for ev in self_events {
-//                    RA::handle_entity_event()
+            for ev in to_route {
+                match ev  {
+                    Event::Shutdown => running = false,
+                    Event::SpawnEvent(id, entity) => {
+                        last_entities.insert(id, entity);
+                        ()
+                    },
+                    Event::Delete(id) => {
+                        last_entities.remove(&id);
+                        ()
+                    },
+                    Event::DeleteRange(from, to) => {
+                        let mut to_delete = Vec::new();
+                        for (k, _) in last_entities.range((Included(&from), Included(&to))) {
+                            to_delete.push(k.clone());
+                        }
+                        for k in to_delete {
+                            last_entities.remove(&k);
+                        }
+                    },
+                    Event::EntityEvent(id, entity_event) => entity_events.insert(id, entity_event),
+                    Event::RenderEvent(render_event) => render_events.push(render_event),
                 }
             }
+
+            to_route = Vec::new();
+
+            entities = last_entities.iter().map(|(id, e)| {
+                let mut entity = e.clone();
+
+                // handle events from last frame
+                if let Some(evs) = entity_events.get_vec(id) {
+                    for event in evs {
+                        let mut out = RA::handle_entity_event(event, id, &mut entity);
+                        to_route.append(&mut out);
+                    }
+                }
+
+                let (self_events, mut route_events) = RA::simulate(simulate_tick, &last_entities, id, &entity);
+
+                to_route.append(&mut route_events);
+
+                // handle self effects immediately
+                for event in &self_events {
+                    let mut out = RA::handle_entity_event(event, id, &mut entity);
+                    to_route.append(&mut out);
+                }
+
+                (id.clone(), entity)
+            }).collect();
+
 
             tick += 1;
             simulation_accu_ns -= per_tick_ns;
@@ -94,8 +147,7 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
         RA::render(render_tick, &entities, &mut rs, &mut renderer);
 
         if input.close {
-            break 'main;
-
+            running = false;
         }
     }
 

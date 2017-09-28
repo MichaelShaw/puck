@@ -69,7 +69,6 @@ pub enum EntityEvent {
     UpdateFacing { velocity : Vec2f, facing: f64, position: Vec2f },
 }
 
-
 fn create_player() -> Entity {
     Entity {
         kind: EntityKind::Player,
@@ -123,7 +122,7 @@ impl App for AstroApp {
     type EntityEvent = EntityEvent;
     type RenderEvent = SoundEvent;
 
-    fn handle_entity_event(event:&Self::EntityEvent, entity: &mut Self::Entity) -> Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>> {
+    fn handle_entity_event(event:&Self::EntityEvent, id: &Self::Id, entity: &mut Self::Entity) -> Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>> {
         Vec::new()
     }
 

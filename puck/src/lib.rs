@@ -20,6 +20,8 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
+extern crate multimap;
+
 pub mod audio;
 pub mod render;
 pub mod app;

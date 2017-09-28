@@ -22,3 +22,5 @@ rand = "0.3"
 cgmath = { version = "0.15", features = ["serde"] }
 
 rayon = "0.8"
+
+multimap = "0.4"
