@@ -21,3 +21,5 @@ glutin = "0.9"
 gfx_window_glutin = "0.17"
 image = "0.14"
 rusttype = "0.2"
+
+rayon = "0.8"

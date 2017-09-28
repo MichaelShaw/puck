@@ -14,6 +14,8 @@ extern crate cgmath;
 
 extern crate fnv;
 
+extern crate rayon;
+
 pub mod event;
 pub mod network;
 pub mod color;
