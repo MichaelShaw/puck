@@ -44,6 +44,11 @@ impl Id {
     }
 }
 
+pub type IdRange = (Bound<Id>, Bound<Id>);
+
+pub const ALL_ROCKS : IdRange = (Included(Id::Rock(0)), Included(Id::Rock(1000)));
+pub const ALL_SHOTS : IdRange = (Included(Id::Shot(0)), Included(Id::Shot(1000)));
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 pub enum ActorKind {
     Player,
@@ -198,8 +203,6 @@ fn update_life(actor:&Actor, time:f32) -> EntityEvent {
 }
 
 fn update_physics(actor:&Actor, time:f32, wrap_x:f32, wrap_y: f32) -> EntityEvent {
-    // Clamp the velocity to the max efficiently
-
     let norm = actor.velocity.magnitude();
     let vel = if norm > MAX_PHYSICS_VEL {
         actor.velocity / norm * MAX_PHYSICS_VEL
@@ -234,10 +237,6 @@ pub fn main() {
 
 struct AstroApp();
 
-pub type IdRange = (Bound<Id>, Bound<Id>);
-
-pub const ALL_ROCKS : IdRange = (Included(Id::Rock(0)), Included(Id::Rock(1000)));
-pub const ALL_SHOTS : IdRange = (Included(Id::Shot(0)), Included(Id::Shot(1000)));
 
 //struct RenderState {
 //    pub sound_events: Vec<SoundEvent>,

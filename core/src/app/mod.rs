@@ -40,6 +40,12 @@ impl<A> Sink<A> {
     pub fn push(&mut self, a: A) {
         self.events.push(a);
     }
+    pub fn push_opt(&mut self, a: Option<A>) {
+        match a {
+            Some(a) => self.push(a),
+            None => (),
+        }
+    }
 }
 
 pub struct CombinedSink<A, B> {
@@ -54,6 +60,8 @@ impl<A, B> CombinedSink<A, B> {
             events: Vec::new(),
         }
     }
+
+
 
     pub fn push_self(&mut self, a: A) {
         self.self_events.push(a);
