@@ -147,7 +147,7 @@ impl<F> Renderer<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer, F, gfx_
 
     pub fn load_resources(&mut self, reload_texture: bool, reload_program: bool) -> bool {
         if reload_program || self.pipelines.is_none() {
-            //            println!("LOAD PIPELINES");
+                        println!("LOAD PIPELINES");
             let pipeline_load_result = self.file_resources.shader_pair.load().and_then( |shader_data| {
                 let opaque_pso = self.factory.create_pipeline_simple(
                     &shader_data.vertex_data,
@@ -180,7 +180,7 @@ impl<F> Renderer<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer, F, gfx_
         }
 
         if reload_texture || self.texture.is_none() {
-            //            println!("LOAD TEXTURES");
+                        println!("LOAD TEXTURES");
             let texture_load_result = self.file_resources.texture_directory.load().and_then(|texture_array_data| {
                 let images_raw : Vec<_> = texture_array_data.images.iter().map(|img| {
                     let dyn_image = DynamicImage::ImageRgba8(img.clone()).flipv();
@@ -236,7 +236,7 @@ impl<F> Renderer<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer, F, gfx_
                     out_depth: self.screen_depth_target.clone(),
                 };
                 let locals = Locals {
-                    u_transform: uniforms.transform,
+                    u_transform: down_size_m4(uniforms.transform.into()),
                     u_color: uniforms.color.float_raw(),
                     u_alpha_minimum: 0.01,
                 };
@@ -256,7 +256,7 @@ impl<F> Renderer<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer, F, gfx_
                     out_depth: self.screen_depth_target.clone(),
                 };
                 let locals = Locals {
-                    u_transform: uniforms.transform,
+                    u_transform: down_size_m4(uniforms.transform.into()),
                     u_color: uniforms.color.float_raw(),
                     u_alpha_minimum: 0.01,
                 };

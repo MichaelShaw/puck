@@ -13,6 +13,7 @@ pub struct Camera {
     pub pitch: Rad<f64>,
     pub viewport: Dimensions,
     pub points_per_unit: f64,
+    pub near_far: (f64, f64),
 }
 
 impl Camera {
@@ -33,7 +34,8 @@ impl Camera {
 
     pub fn projection(&self) -> Mat4 {
         let (points_wide, points_high) = self.viewport.points;
-        projection(points_wide as f64, points_high as f64, self.points_per_unit)
+        let (near, far) = self.near_far;
+        projection(points_wide as f64, points_high as f64, self.points_per_unit, near, far)
     }
 
     pub fn units_per_point(&self) -> f64 {
@@ -76,13 +78,13 @@ pub fn ui_projection(width: f64, height: f64) -> Mat4 {
     cgmath::ortho(0.0, width, 0.0, height, -100.0, 100.0) // having trouble with this z stuff
 }
 
-pub fn projection(width:f64, height:f64, pixels_per_unit: f64) -> Mat4 {
+pub fn projection(width:f64, height:f64, pixels_per_unit: f64, near: f64, far: f64) -> Mat4 {
     let effective_width = width  / pixels_per_unit;
     let effective_height = height / pixels_per_unit / (2.0_f64).sqrt(); // adjust for 45 degree downward viewing angle
     let half_width = effective_width / 2.0;
     let half_height = effective_height / 2.0;
 
-    cgmath::ortho(-half_width, half_width, -half_height, half_height, -100.0, 100.0)
+    cgmath::ortho(-half_width, half_width, -half_height, half_height, near, far)
 }
 
 pub fn ray_for_mouse_position(inverse_view_projection:Mat4, width:u32, height:u32, x:i32, y:i32) -> Option<LineSegment> {

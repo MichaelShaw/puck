@@ -25,6 +25,7 @@ void main() {
         discard;
     }
     f_color = final_colour;
+//    f_color = vec4(1, 0, 0, 1);
 }
 
 

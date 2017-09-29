@@ -8,15 +8,15 @@ extern crate rand;
 extern crate serde_derive;
 extern crate serde;
 
-use cgmath::{Zero, InnerSpace, vec3, vec2};
-
+use cgmath::{Zero, InnerSpace, vec3, vec2, Rad};
+use std::f64::consts::PI;
 
 
 use puck_core::{Vec2f, Vec3f, Vec3, Tick, HashMap, TreeMap, Color};
 use puck_core::app::{App, Event, SimSettings};
 
 use puck::app::{RenderedApp, RenderSettings};
-use puck::{FileResources, RenderTick, Input, Dimensions};
+use puck::{FileResources, RenderTick, Input, Dimensions, Camera};
 use puck::audio::{SoundRender, Listener, SoundEvent};
 use puck::render::gfx::OpenGLRenderer;
 use puck::render::*;
@@ -56,6 +56,7 @@ pub struct Actor {
     pub rvel: f32,
     pub bbox_size: f32,
     pub life: f32, // for shots, times alive, for players/rocks hp
+    pub thrust: bool,
 }
 
 const PLAYER_LIFE: f32 = 1.0;
@@ -83,7 +84,9 @@ const MAX_PHYSICS_VEL: f32 = 250.0;
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum EntityEvent {
+    UpdateShipControls { rvel: f32, thrust: bool },
     UpdatePhysics { velocity : Vec2f, facing: f32, position: Vec2f },
+    AdjustLife { life: f32 },
     IncreaseLevel,
     IncreaseScore,
 }
@@ -97,6 +100,7 @@ fn create_player() -> Actor {
         rvel: 0.,
         bbox_size: PLAYER_BBOX,
         life: PLAYER_LIFE,
+        thrust: false,
     }
 }
 
@@ -109,6 +113,7 @@ fn create_rock() -> Actor {
         rvel: 0.,
         bbox_size: ROCK_BBOX,
         life: ROCK_LIFE,
+        thrust: false,
     }
 }
 
@@ -121,6 +126,7 @@ fn create_shot() -> Actor {
         rvel: SHOT_RVEL,
         bbox_size: SHOT_BBOX,
         life: SHOT_LIFE,
+        thrust: false,
     }
 }
 
@@ -152,30 +158,17 @@ fn create_rocks(num: u64, exclusion: Vec2f, min_radius: f32, max_radius: f32) ->
 fn wrapped_position(pos:Vec2f, wrap_x:f32, wrap_y:f32) -> Vec2f {
     let mut wrapped_pos = pos;
 
-    // Wrap screen
-    let screen_x_bounds = wrap_x / 2.0;
-    let screen_y_bounds = wrap_y / 2.0;
-    let sprite_half_size = (SPRITE_SIZE / 2) as f32;
-    let actor_center = pos - Vec2f::new(-sprite_half_size, sprite_half_size);
-    if actor_center.x > screen_x_bounds {
+    if pos.x > wrap_x {
         wrapped_pos.x -= wrap_x;
-    } else if actor_center.x < -screen_x_bounds {
+    } else if pos.x < 0. {
         wrapped_pos.x += wrap_x;
     };
-    if actor_center.y > screen_y_bounds {
+    if pos.y > wrap_y {
         wrapped_pos.y -= wrap_y;
-    } else if actor_center.y < -screen_y_bounds {
+    } else if pos.y < 0. {
         wrapped_pos.y += wrap_y;
     }
     wrapped_pos
-}
-
-fn world_to_screen_coords(screen_width: u32, screen_height: u32, point: Vec2f) -> Vec2f {
-    let width = screen_width as f32;
-    let height = screen_height as f32;
-    let x = point.x + width / 2.0;
-    let y = height - (point.y + height / 2.0);
-    Vec2f::new(x, y)
 }
 
 fn update_physics(actor:&Actor, time:f32, wrap_x:f32, wrap_y: f32) -> EntityEvent {
@@ -188,9 +181,16 @@ fn update_physics(actor:&Actor, time:f32, wrap_x:f32, wrap_y: f32) -> EntityEven
         actor.velocity
     };
 
+    let accel = if actor.thrust {
+        let v = vec_from_angle(-actor.facing + PI as f32);
+        v * PLAYER_THRUST
+    } else {
+        vec2(0., 0.)
+    };
+
     EntityEvent::UpdatePhysics {
-        velocity : vel,
-        facing: actor.facing + actor.rvel,
+        velocity : vel + accel * time,
+        facing: actor.facing + actor.rvel * time,
         position: wrapped_position(actor.pos + actor.velocity * time, wrap_x, wrap_y),
     }
 }
@@ -235,10 +235,19 @@ impl App for AstroApp {
         match (event, entity) {
             (&IncreaseLevel, &mut Game { mut level, .. }) => { level += 1; vec![] },
             (&IncreaseScore, &mut Game { mut score, ..}) => { score += 1; vec![] },
+            (&UpdateShipControls { rvel, thrust }, &mut Actor(ref mut actor)) => {
+                actor.rvel = rvel;
+                actor.thrust = thrust;
+                vec![]
+            }
             (&UpdatePhysics { velocity, facing, position }, &mut Actor(ref mut actor)) => {
                 actor.velocity = velocity;
                 actor.facing = facing;
                 actor.pos = position;
+                vec![]
+            }
+            (&AdjustLife { life }, &mut Actor(ref mut actor)) => {
+                actor.life = life;
                 vec![]
             },
             (ev, ent) => {
@@ -270,6 +279,8 @@ impl App for AstroApp {
                 }
             },
             &Actor(ref actor) => {
+//                println!("simulate -> {:?} for {:?}", actor, time.tick_duration);
+
                 (vec![update_physics(actor, time.tick_duration as f32, 640.0, 480.0)], vec![] )
             },
         }
@@ -280,7 +291,20 @@ impl RenderedApp for AstroApp {
     type RenderState = Vec<SoundEvent>;
 
     fn handle_input(input:&Input, dimensions: &Dimensions, entities: &TreeMap<Self::Id, Self::Entity>) -> Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>> {
-        Vec::new()
+
+        if let Some(&Entity::Actor(actor)) = entities.get(&Id::Player) {
+           let rvel = if input.keys.down.contains(&puck::input::VirtualKeyCode::A) {
+               -PLAYER_TURN_RATE
+           } else if input.keys.down.contains(&puck::input::VirtualKeyCode::D) {
+                PLAYER_TURN_RATE
+           } else {
+               0.0
+           };
+           let thrust = input.keys.down.contains(&puck::input::VirtualKeyCode::W);
+           vec![Event::EntityEvent(Id::Player, EntityEvent::UpdateShipControls { rvel, thrust})]
+        } else {
+           vec![]
+        }
     }
 
     fn handle_render_event(event: &Self::RenderEvent, render_state: &mut Self::RenderState) {
@@ -301,8 +325,8 @@ impl RenderedApp for AstroApp {
             tile_size: 32,
         };
         let rock = atlas.at(0, 0);
-        let shot = atlas.at(0, 1);
-        let player = atlas.at(0, 2);
+        let shot = atlas.at(1, 0);
+        let player = atlas.at(2, 0);
 
         for (id, e) in entities {
             match e {
@@ -321,8 +345,20 @@ impl RenderedApp for AstroApp {
             }
         }
 
+        let (w, h) = dimensions.points;
+        let camera = Camera {
+            at: vec3(w as f64 / 2.0, 0., h as f64 / 2.0),
+            pitch: Rad(PI / 4.0_f64),
+            viewport: *dimensions,
+            points_per_unit: 1.0,
+            near_far: (-1000., 1000.),
+        };
 
-        renderer.finish_frame();
+        renderer.draw_vertices(&verticies, Uniforms {
+            transform : camera.view_projection(),
+            color: Color::WHITE,
+        }, Blend::None).expect("the ability to draw");
+        renderer.finish_frame().expect("finished frame");
 
         let out = render_state.split_off(0);
         SoundRender::non_positional_effects(Vec::new())

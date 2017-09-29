@@ -10,6 +10,7 @@ pub use self::texture_region::*;
 pub use self::quads::*;
 
 use image::Rgba;
+use puck_core::Mat4;
 use puck_core::color::Color;
 
 pub fn as_rgba8(color:Color) -> Rgba<u8> {
@@ -29,7 +30,7 @@ pub fn down_size_m4(arr: [[f64; 4];4]) -> [[f32; 4]; 4] {
 
 pub type Vertex = self::gfx::Vertex;
 pub type BufferData = Vec<Vertex>;
-pub type Transform = [[f32; 4]; 4];
+pub type Transform = Mat4;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Uniforms {

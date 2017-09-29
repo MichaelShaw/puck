@@ -71,6 +71,7 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
         // ROUTE THE EVENTS
 
         while simulation_accu_ns > per_tick_ns {
+//            println!("tick @ {:?}", tick);
             // simulate
             let simulate_tick = Tick {
                 n: tick,
@@ -83,7 +84,7 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
             let mut entity_events = MultiMap::new();
 
             for ev in to_route {
-                println!("handle event -> {:?}", ev);
+//                println!("handle event -> {:?}", ev);
                 match ev  {
                     Event::Shutdown => running = false,
                     Event::SpawnEvent(id, entity) => {
@@ -123,7 +124,7 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
                 }
 
                 // simulate entity
-                println!("simulate -> {:?} {:?}", id, e);
+//                println!("simulate -> {:?} {:?}", id, e);
                 let (self_events, mut route_events) = RA::simulate(simulate_tick, &last_entities, id, &entity);
 
                 to_route.append(&mut route_events);
@@ -153,12 +154,18 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
             RA::handle_render_event(&render_event, &mut rs);
         }
         render_events = Vec::new();
-        println!("render");
+//        println!("render");
+        let ok = renderer.load_resources(false, false);
+        if !ok {
+            println!("renderer is not ok");
+        }
         RA::render(render_tick, &dimensions, &entities, &mut rs, &mut renderer);
 
         if input.close {
             running = false;
         }
+
+        last_time = time;
     }
 
 

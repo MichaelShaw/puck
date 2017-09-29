@@ -4,6 +4,7 @@ use Vec3;
 use cgmath::Vector2;
 use cgmath::InnerSpace;
 use cgmath::dot;
+use std;
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug, Hash)]
 pub struct Rect<F> {
@@ -20,6 +21,8 @@ pub struct LineSegment {
     pub to: Vec3,
 }
 
+const PI : f64 = std::f64::consts::PI;
+const TAU : f64 = PI * 2.0;
 const EPSILON: f64 = 0.0000001;
 
 impl LineSegment {
