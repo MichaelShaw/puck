@@ -266,7 +266,6 @@ impl App for AstroApp {
                 actor.velocity = velocity;
                 actor.facing = facing;
                 actor.pos = position;
-
             }
             (&SetLife(life), &mut Actor(ref mut actor)) => {
                 actor.life = life;
@@ -287,10 +286,10 @@ impl App for AstroApp {
                 if let Some(&Entity::Actor(player)) = entities.get(&Id::Player) {
                     let rock_count = entities.range(ALL_ROCKS).count();
                     if rock_count == 0 {
+                        sink.push_self(IncreaseLevel);
                         let spawn_rocks : Vec<_> = create_rocks(level + 6, player.pos, 100.0, 250.0).into_iter().map(|(id, entity)| {
                             Event::SpawnEvent(id, entity)
                         }).collect();
-                        sink.push_self(IncreaseLevel);
                         for ev in spawn_rocks {
                             sink.push_event(ev);
                         }
