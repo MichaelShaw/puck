@@ -11,8 +11,7 @@ extern crate serde;
 use cgmath::{Zero, InnerSpace, vec3, vec2, Rad};
 use std::f64::consts::PI;
 
-
-use puck_core::{Vec2f, Vec3f, Vec3, Tick, HashMap, TreeMap, Color};
+use puck_core::{Vec2f, Vec3f, Vec3, Tick, HashMap, TreeMap, Color, clamp};
 use puck_core::app::{App, Event, SimSettings};
 
 use puck::app::{RenderedApp, RenderSettings};
@@ -86,7 +85,7 @@ const MAX_PHYSICS_VEL: f32 = 250.0;
 pub enum EntityEvent {
     UpdateShipControls { rvel: f32, thrust: bool },
     UpdatePhysics { velocity : Vec2f, facing: f32, position: Vec2f },
-    AdjustLife { life: f32 },
+    SetLife(f32),
     IncreaseLevel,
     IncreaseScore,
 }
@@ -171,6 +170,15 @@ fn wrapped_position(pos:Vec2f, wrap_x:f32, wrap_y:f32) -> Vec2f {
     wrapped_pos
 }
 
+fn update_life(actor:&Actor, time:f32) -> EntityEvent {
+    let new_life = if actor.life > 0.0 {
+        clamp(actor.life - time, 0.0, 1000.0)
+    } else {
+        actor.life
+    };
+    EntityEvent::SetLife(actor.life)
+}
+
 fn update_physics(actor:&Actor, time:f32, wrap_x:f32, wrap_y: f32) -> EntityEvent {
     // Clamp the velocity to the max efficiently
 
@@ -246,7 +254,7 @@ impl App for AstroApp {
                 actor.pos = position;
                 vec![]
             }
-            (&AdjustLife { life }, &mut Actor(ref mut actor)) => {
+            (&SetLife(life), &mut Actor(ref mut actor)) => {
                 actor.life = life;
                 vec![]
             },
@@ -261,8 +269,9 @@ impl App for AstroApp {
         use puck_core::app::Event::*;
         use Entity::*;
         use EntityEvent::*;
+        use ActorKind::*;
         match entity {
-            &Game { score, level } => {
+            &Game { level, .. } => {
                 if let Some(&Entity::Actor(player)) = entities.get(&Id::Player) {
                     let rock_count = entities.range(ALL_ROCKS).count();
                     if rock_count == 0 {
@@ -279,9 +288,13 @@ impl App for AstroApp {
                 }
             },
             &Actor(ref actor) => {
+                let physics = update_physics(actor, time.tick_duration as f32, 640.0, 480.0);
 //                println!("simulate -> {:?} for {:?}", actor, time.tick_duration);
-
-                (vec![update_physics(actor, time.tick_duration as f32, 640.0, 480.0)], vec![] )
+                match actor.kind {
+                    Player => (vec![physics, update_life(actor, time.tick_duration as f32)], vec![]),
+                    Rock => (vec![physics], vec![]),
+                    Shot => (vec![physics, update_life(actor, time.tick_duration as f32)], vec![]),
+                }
             },
         }
     }
