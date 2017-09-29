@@ -4,7 +4,9 @@ use super::{Listener, DistanceModel, SoundEvent, Gain, SoundName, SoundProviderR
 use super::context::{SoundContext};
 use super::source::SoundSourceLoan;
 use super::errors::*;
-use puck_core::HashMap;
+use puck_core::{HashMap, Vec3f};
+
+use cgmath::{Zero};
 
 #[derive(Debug, Clone)]
 pub struct SoundRender {
@@ -12,6 +14,22 @@ pub struct SoundRender {
     pub sounds:Vec<SoundEvent>,
     pub persistent_sounds:HashMap<String, SoundEvent>,
     pub listener: Listener
+}
+
+impl SoundRender {
+    pub fn non_positional_effects(sounds:Vec<SoundEvent>) -> SoundRender {
+        SoundRender {
+            master_gain: 1.0,
+            sounds: sounds,
+            persistent_sounds: HashMap::default(),
+            listener: Listener {
+                position: Vec3f::zero(),
+                velocity: Vec3f::zero(),
+                orientation_up: Vec3f::zero(),
+                orientation_forward: Vec3f::zero(),
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

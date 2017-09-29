@@ -40,6 +40,6 @@ pub trait RenderedApp : App {
 
     fn handle_input(input:&Input, dimensions: &Dimensions, entities: &Map<Self::Id, Self::Entity>) -> Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>;
     fn handle_render_event(event: &Self::RenderEvent, render_state: &mut Self::RenderState);
-    fn render(time: RenderTick, entities:&Map<Self::Id, Self::Entity>, render_state: &mut Self::RenderState, renderer: &mut OpenGLRenderer) -> SoundRender;
+    fn render(time: RenderTick, dimensions: &Dimensions, entities:&Map<Self::Id, Self::Entity>, render_state: &mut Self::RenderState, renderer: &mut OpenGLRenderer) -> SoundRender;
 }
 

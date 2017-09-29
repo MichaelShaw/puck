@@ -150,7 +150,7 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
             RA::handle_render_event(&render_event, &mut rs);
         }
         render_events = Vec::new();
-        RA::render(render_tick, &entities, &mut rs, &mut renderer);
+        RA::render(render_tick, &dimensions, &entities, &mut rs, &mut renderer);
 
         if input.close {
             running = false;
