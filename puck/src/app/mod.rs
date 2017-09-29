@@ -1,7 +1,7 @@
 pub mod runner;
 
 //use puck_core::{HashMap, Tick};
-use puck_core::app::{Event, App};
+use puck_core::app::{Event, App, Sink};
 use input::Input;
 use audio::SoundRender;
 
@@ -38,7 +38,7 @@ pub struct RenderSettings {
 pub trait RenderedApp : App {
     type RenderState;
 
-    fn handle_input(input:&Input, dimensions: &Dimensions, entities: &Map<Self::Id, Self::Entity>) -> Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>;
+    fn handle_input(input:&Input, dimensions: &Dimensions, entities: &Map<Self::Id, Self::Entity>, sink: &mut Sink<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>);
     fn handle_render_event(event: &Self::RenderEvent, render_state: &mut Self::RenderState);
     fn render(time: RenderTick, dimensions: &Dimensions, entities:&Map<Self::Id, Self::Entity>, render_state: &mut Self::RenderState, renderer: &mut OpenGLRenderer) -> SoundRender;
 }

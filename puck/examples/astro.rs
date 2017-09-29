@@ -12,7 +12,7 @@ use cgmath::{Zero, InnerSpace, vec3, vec2, Rad};
 use std::f64::consts::PI;
 
 use puck_core::{Vec2f, Vec3f, Vec3, Tick, HashMap, TreeMap, Color, clamp};
-use puck_core::app::{App, Event, SimSettings};
+use puck_core::app::{App, Event, SimSettings, Sink, CombinedSink};
 
 use puck::app::{RenderedApp, RenderSettings};
 use puck::{FileResources, RenderTick, Input, Dimensions, Camera};
@@ -31,6 +31,17 @@ pub enum Id {
     Player,
     Rock(u64),
     Shot(u64),
+}
+
+impl Id {
+    pub fn next(self) -> Option<Id> {
+        match self {
+            Id::Game => None,
+            Id::Player => None,
+            Id::Rock(id) => Some(Id::Rock(id + 1)),
+            Id::Shot(id) => Some(Id::Shot(id + 1)),
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
@@ -56,6 +67,7 @@ pub struct Actor {
     pub bbox_size: f32,
     pub life: f32, // for shots, times alive, for players/rocks hp
     pub thrust: bool,
+    pub shooting: bool,
 }
 
 const PLAYER_LIFE: f32 = 1.0;
@@ -83,7 +95,7 @@ const MAX_PHYSICS_VEL: f32 = 250.0;
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum EntityEvent {
-    UpdateShipControls { rvel: f32, thrust: bool },
+    UpdateShipControls { rvel: f32, thrust: bool, shooting: bool },
     UpdatePhysics { velocity : Vec2f, facing: f32, position: Vec2f },
     SetLife(f32),
     IncreaseLevel,
@@ -98,8 +110,9 @@ fn create_player() -> Actor {
         velocity: Vec2f::zero(),
         rvel: 0.,
         bbox_size: PLAYER_BBOX,
-        life: PLAYER_LIFE,
+        life: 0.0,
         thrust: false,
+        shooting: false,
     }
 }
 
@@ -113,19 +126,21 @@ fn create_rock() -> Actor {
         bbox_size: ROCK_BBOX,
         life: ROCK_LIFE,
         thrust: false,
+        shooting: false,
     }
 }
 
-fn create_shot() -> Actor {
+fn create_shot(pos: Vec2f, facing: f32, velocity: Vec2f) -> Actor {
     Actor {
         kind: ActorKind::Shot,
-        pos: Vec2f::zero(),
-        facing: 0.,
-        velocity: Vec2f::zero(),
+        pos,
+        facing,
+        velocity,
         rvel: SHOT_RVEL,
         bbox_size: SHOT_BBOX,
         life: SHOT_LIFE,
         thrust: false,
+        shooting: false,
     }
 }
 
@@ -135,9 +150,12 @@ fn random_vec(max_magnitude: f32) -> Vec2f {
     vec_from_angle(angle) * (mag)
 }
 
-fn vec_from_angle(angle: f32) -> Vec2f {
-    let vx = angle.sin();
-    let vy = angle.cos();
+fn vec_from_angle(angle: f32) -> Vec2f { // should probably fix this on the rendering end :-/
+    let ang = -angle + PI as f32;
+
+    let vx = ang.sin();
+    let vy = ang.cos();
+
     Vec2f::new(vx, vy)
 }
 
@@ -176,7 +194,7 @@ fn update_life(actor:&Actor, time:f32) -> EntityEvent {
     } else {
         actor.life
     };
-    EntityEvent::SetLife(actor.life)
+    EntityEvent::SetLife(new_life)
 }
 
 fn update_physics(actor:&Actor, time:f32, wrap_x:f32, wrap_y: f32) -> EntityEvent {
@@ -190,7 +208,7 @@ fn update_physics(actor:&Actor, time:f32, wrap_x:f32, wrap_y: f32) -> EntityEven
     };
 
     let accel = if actor.thrust {
-        let v = vec_from_angle(-actor.facing + PI as f32);
+        let v = vec_from_angle(actor.facing);
         v * PLAYER_THRUST
     } else {
         vec2(0., 0.)
@@ -221,10 +239,6 @@ pub type IdRange = (Bound<Id>, Bound<Id>);
 pub const ALL_ROCKS : IdRange = (Included(Id::Rock(0)), Included(Id::Rock(100)));
 pub const ALL_SHOTS : IdRange = (Included(Id::Shot(0)), Included(Id::Shot(100)));
 
-pub fn no_events<A, B>() -> (Vec<A>, Vec<B>) {
-    (Vec::new(), Vec::new())
-}
-
 //struct RenderState {
 //    pub sound_events: Vec<SoundEvent>,
 //
@@ -236,36 +250,34 @@ impl App for AstroApp {
     type EntityEvent = EntityEvent;
     type RenderEvent = SoundEvent;
 
-    fn handle_entity_event(event:&Self::EntityEvent, id: &Self::Id, entity: &mut Self::Entity) -> Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>> {
+    fn handle_entity_event(event:&Self::EntityEvent, id: &Self::Id, entity: &mut Self::Entity, sink: &mut Sink<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>) {
         use Entity::*;
         use EntityEvent::*;
 
         match (event, entity) {
-            (&IncreaseLevel, &mut Game { mut level, .. }) => { level += 1; vec![] },
-            (&IncreaseScore, &mut Game { mut score, ..}) => { score += 1; vec![] },
-            (&UpdateShipControls { rvel, thrust }, &mut Actor(ref mut actor)) => {
+            (&IncreaseLevel, &mut Game { mut level, .. }) => { level += 1 },
+            (&IncreaseScore, &mut Game { mut score, ..}) => { score += 1 },
+            (&UpdateShipControls { rvel, thrust, shooting }, &mut Actor(ref mut actor)) => {
                 actor.rvel = rvel;
                 actor.thrust = thrust;
-                vec![]
+                actor.shooting = shooting;
             }
             (&UpdatePhysics { velocity, facing, position }, &mut Actor(ref mut actor)) => {
                 actor.velocity = velocity;
                 actor.facing = facing;
                 actor.pos = position;
-                vec![]
+
             }
             (&SetLife(life), &mut Actor(ref mut actor)) => {
                 actor.life = life;
-                vec![]
             },
             (ev, ent) => {
                 println!("uhhh, dont recognize {:?} with {:?}", ev, ent);
-                vec![]
             },
         }
     }
 
-    fn simulate(time:Tick, entities:&TreeMap<Self::Id, Self::Entity>, id: &Self::Id, entity: &Self::Entity) -> (Vec<Self::EntityEvent>, Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>) {
+    fn simulate(time:Tick, entities:&TreeMap<Self::Id, Self::Entity>, id: &Self::Id, entity: &Self::Entity, sink: &mut CombinedSink<Self::EntityEvent, Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>)  {
         use puck_core::app::Event::*;
         use Entity::*;
         use EntityEvent::*;
@@ -275,25 +287,33 @@ impl App for AstroApp {
                 if let Some(&Entity::Actor(player)) = entities.get(&Id::Player) {
                     let rock_count = entities.range(ALL_ROCKS).count();
                     if rock_count == 0 {
-                        let spawn_rocks = create_rocks(level + 6, player.pos, 100.0, 250.0).into_iter().map(|(id, entity)| {
+                        let spawn_rocks : Vec<_> = create_rocks(level + 6, player.pos, 100.0, 250.0).into_iter().map(|(id, entity)| {
                             Event::SpawnEvent(id, entity)
                         }).collect();
-                        (vec![IncreaseLevel], spawn_rocks)
-                    } else {
-                        no_events()
+                        sink.push_self(IncreaseLevel);
+                        for ev in spawn_rocks {
+                            sink.push_event(ev);
+                        }
                     }
                 } else {
                     // no player
-                    (vec![], vec![SpawnEvent(Id::Player, Entity::Actor(create_player()))])
+                    sink.push_event(SpawnEvent(Id::Player, Entity::Actor(create_player())));
                 }
             },
             &Actor(ref actor) => {
-                let physics = update_physics(actor, time.tick_duration as f32, 640.0, 480.0);
-//                println!("simulate -> {:?} for {:?}", actor, time.tick_duration);
+                sink.push_self(update_physics(actor, time.tick_duration as f32, 640.0, 480.0));
                 match actor.kind {
-                    Player => (vec![physics, update_life(actor, time.tick_duration as f32)], vec![]),
-                    Rock => (vec![physics], vec![]),
-                    Shot => (vec![physics, update_life(actor, time.tick_duration as f32)], vec![]),
+                    Player => {
+                        if actor.shooting && actor.life <= 0.0 {
+                            let shot_velocity = vec_from_angle(actor.facing) * SHOT_SPEED;
+                            let shot = create_shot(actor.pos, actor.facing, shot_velocity);
+                            sink.push_self(SetLife(PLAYER_LIFE));
+                        } else {
+                            sink.push_self(update_life(actor, time.tick_duration as f32));
+                        }
+                    },
+                    Rock => (),
+                    Shot => sink.push_self(update_life(actor, time.tick_duration as f32)),
                 }
             },
         }
@@ -303,8 +323,7 @@ impl App for AstroApp {
 impl RenderedApp for AstroApp {
     type RenderState = Vec<SoundEvent>;
 
-    fn handle_input(input:&Input, dimensions: &Dimensions, entities: &TreeMap<Self::Id, Self::Entity>) -> Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>> {
-
+    fn handle_input(input:&Input, dimensions: &Dimensions, entities: &TreeMap<Self::Id, Self::Entity>, sink: &mut Sink<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>) {
         if let Some(&Entity::Actor(actor)) = entities.get(&Id::Player) {
            let rvel = if input.keys.down.contains(&puck::input::VirtualKeyCode::A) {
                -PLAYER_TURN_RATE
@@ -314,9 +333,8 @@ impl RenderedApp for AstroApp {
                0.0
            };
            let thrust = input.keys.down.contains(&puck::input::VirtualKeyCode::W);
-           vec![Event::EntityEvent(Id::Player, EntityEvent::UpdateShipControls { rvel, thrust})]
-        } else {
-           vec![]
+           let shooting = input.keys.down.contains(&puck::input::VirtualKeyCode::Space);
+           sink.push(Event::EntityEvent(Id::Player, EntityEvent::UpdateShipControls { rvel, thrust, shooting }));
         }
     }
 
@@ -344,7 +362,7 @@ impl RenderedApp for AstroApp {
         for (id, e) in entities {
             match e {
                 &Game { level, score } => {
-
+                    // render some ui stuff?
                 },
                 &Actor(actor) => {
                     let tex = match actor.kind {

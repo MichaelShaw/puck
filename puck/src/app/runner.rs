@@ -7,7 +7,7 @@ use std::collections::BTreeMap as TreeMap;
 use render::gfx::{Renderer, construct_opengl_renderer};
 
 use {PuckResult, FileResources, RenderTick};
-use puck_core::app::{SimSettings, Event};
+use puck_core::app::{SimSettings, Event, Sink, CombinedSink};
 use puck_core::Tick;
 use super::{RenderedApp, RenderSettings};
 use std::collections::Bound::Included;
@@ -64,9 +64,9 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
         let time_delta_ns = time - last_time;
 
         simulation_accu_ns += time_delta_ns;
-
-        let mut input_events = RA::handle_input(&input, &dimensions, &entities);
-        to_route.append(&mut input_events);
+        let mut sink = Sink::empty();
+        RA::handle_input(&input, &dimensions, &entities, &mut sink);
+        to_route.append(&mut sink.events);
 
         // ROUTE THE EVENTS
 
@@ -117,22 +117,24 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
                 // handle events from last frame
                 if let Some(evs) = entity_events.get_vec(id) {
                     for event in evs {
-
-                        let mut out = RA::handle_entity_event(event, id, &mut entity);
-                        to_route.append(&mut out);
+                        let mut sink = Sink::empty();
+                        RA::handle_entity_event(event, id, &mut entity, &mut sink);
+                        to_route.append(&mut sink.events);
                     }
                 }
 
                 // simulate entity
 //                println!("simulate -> {:?} {:?}", id, e);
-                let (self_events, mut route_events) = RA::simulate(simulate_tick, &last_entities, id, &entity);
+                let mut combined_sink = CombinedSink::empty();
+                RA::simulate(simulate_tick, &last_entities, id, &entity, &mut combined_sink);
 
-                to_route.append(&mut route_events);
+                to_route.append(&mut combined_sink.events);
 
                 // handle self effects immediately
-                for event in &self_events {
-                    let mut out = RA::handle_entity_event(event, id, &mut entity);
-                    to_route.append(&mut out);
+                for event in &combined_sink.self_events {
+                    let mut sink = Sink::empty();
+                    RA::handle_entity_event(event, id, &mut entity, &mut sink);
+                    to_route.append(&mut sink.events);
                 }
 
                 (id.clone(), entity)
