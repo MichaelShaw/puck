@@ -34,12 +34,12 @@ pub enum Id {
 }
 
 impl Id {
-    pub fn next(self) -> Option<Id> {
+    pub fn next(&self) -> Option<Id> {
         match self {
-            Id::Game => None,
-            Id::Player => None,
-            Id::Rock(id) => Some(Id::Rock(id + 1)),
-            Id::Shot(id) => Some(Id::Shot(id + 1)),
+            &Id::Game => None,
+            &Id::Player => None,
+            &Id::Rock(id) => Some(Id::Rock(id + 1)),
+            &Id::Shot(id) => Some(Id::Shot(id + 1)),
         }
     }
 }
@@ -236,8 +236,8 @@ struct AstroApp();
 
 pub type IdRange = (Bound<Id>, Bound<Id>);
 
-pub const ALL_ROCKS : IdRange = (Included(Id::Rock(0)), Included(Id::Rock(100)));
-pub const ALL_SHOTS : IdRange = (Included(Id::Shot(0)), Included(Id::Shot(100)));
+pub const ALL_ROCKS : IdRange = (Included(Id::Rock(0)), Included(Id::Rock(1000)));
+pub const ALL_SHOTS : IdRange = (Included(Id::Shot(0)), Included(Id::Shot(1000)));
 
 //struct RenderState {
 //    pub sound_events: Vec<SoundEvent>,
@@ -308,6 +308,8 @@ impl App for AstroApp {
                             let shot_velocity = vec_from_angle(actor.facing) * SHOT_SPEED;
                             let shot = create_shot(actor.pos, actor.facing, shot_velocity);
                             sink.push_self(SetLife(PLAYER_LIFE));
+                            let shot_id = entities.range(ALL_SHOTS).last().and_then(|(id,_)| id.next() ).unwrap_or(Id::Shot(0));
+                            sink.push_event(SpawnEvent(shot_id, Entity::Actor(shot)));
                         } else {
                             sink.push_self(update_life(actor, time.tick_duration as f32));
                         }
