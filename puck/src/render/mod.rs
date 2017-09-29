@@ -7,6 +7,7 @@ pub mod quads;
 pub use self::shader::*;
 pub use self::texture_array::*;
 pub use self::texture_region::*;
+pub use self::quads::*;
 
 use image::Rgba;
 use puck_core::color::Color;

@@ -26,7 +26,7 @@ pub struct ReneredAppRunner<RA, R, C, F, D> where RA : RenderedApp,
 
 pub const NANOSECONDS_IN_A_SECOND : u64 = 1_000_000_000u64;
 
-pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_settings:RenderSettings, render_state: RA::RenderState) -> PuckResult<()> where RA : RenderedApp {
+pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_settings:RenderSettings, render_state: RA::RenderState, initial_entities: TreeMap<RA::Id, RA::Entity>) -> PuckResult<()> where RA : RenderedApp {
     let mut renderer = construct_opengl_renderer(file_resources, render_settings.dimensions, render_settings.vsync, &render_settings.title)?;
 
     // start file watcher
@@ -39,8 +39,8 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
     let mut last_time = start_time;
     let mut simulation_accu_ns = 0_u64;
 
-    let mut last_entities : TreeMap<RA::Id, RA::Entity> = TreeMap::new();
-    let mut entities : TreeMap<RA::Id, RA::Entity> = TreeMap::new();
+    let mut last_entities : TreeMap<RA::Id, RA::Entity> = initial_entities.clone();
+    let mut entities : TreeMap<RA::Id, RA::Entity> = initial_entities.clone();
 
     let mut tick = 0_u64;
 
@@ -83,6 +83,7 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
             let mut entity_events = MultiMap::new();
 
             for ev in to_route {
+                println!("handle event -> {:?}", ev);
                 match ev  {
                     Event::Shutdown => running = false,
                     Event::SpawnEvent(id, entity) => {
@@ -115,12 +116,14 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
                 // handle events from last frame
                 if let Some(evs) = entity_events.get_vec(id) {
                     for event in evs {
+
                         let mut out = RA::handle_entity_event(event, id, &mut entity);
                         to_route.append(&mut out);
                     }
                 }
 
                 // simulate entity
+                println!("simulate -> {:?} {:?}", id, e);
                 let (self_events, mut route_events) = RA::simulate(simulate_tick, &last_entities, id, &entity);
 
                 to_route.append(&mut route_events);
@@ -150,6 +153,7 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
             RA::handle_render_event(&render_event, &mut rs);
         }
         render_events = Vec::new();
+        println!("render");
         RA::render(render_tick, &dimensions, &entities, &mut rs, &mut renderer);
 
         if input.close {

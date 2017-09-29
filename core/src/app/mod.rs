@@ -12,7 +12,7 @@ use serde::de::DeserializeOwned;
 
 pub type TreeMap<K, V> = BTreeMap<K, V>;
 
-#[derive(Copy, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum Event<Id, Entity, EntityEvent, RenderEvent>  {
     Shutdown,
     SpawnEvent(Id, Entity),

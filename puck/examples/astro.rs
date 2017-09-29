@@ -1,4 +1,5 @@
 extern crate puck;
+#[macro_use]
 extern crate puck_core;
 extern crate cgmath;
 extern crate rand;
@@ -7,15 +8,18 @@ extern crate rand;
 extern crate serde_derive;
 extern crate serde;
 
-use cgmath::{Zero, InnerSpace};
+use cgmath::{Zero, InnerSpace, vec3, vec2};
 
-use puck_core::{Vec2f, Vec3f, Tick, HashMap, Color};
-use puck_core::app::{TreeMap, App, Event, SimSettings};
+
+
+use puck_core::{Vec2f, Vec3f, Vec3, Tick, HashMap, TreeMap, Color};
+use puck_core::app::{App, Event, SimSettings};
 
 use puck::app::{RenderedApp, RenderSettings};
 use puck::{FileResources, RenderTick, Input, Dimensions};
 use puck::audio::{SoundRender, Listener, SoundEvent};
 use puck::render::gfx::OpenGLRenderer;
+use puck::render::*;
 
 use std::collections::Bound;
 use std::collections::Bound::*;
@@ -197,7 +201,9 @@ pub fn main() {
     let sim_settings = SimSettings { tick_rate: 60 };
     let render_settings = RenderSettings { dimensions: (640, 480), vsync: false, title: "Astroblasto!".into() };
 
-    let run_result = puck::app::runner::run::<AstroApp>(file_resources, sim_settings, render_settings, Vec::new());
+    let init_state = treemap![Id::Game => Entity::Game { level: 0, score: 0 }];
+
+    let run_result = puck::app::runner::run::<AstroApp>(file_resources, sim_settings, render_settings, Vec::new(), init_state);
 }
 
 struct AstroApp();
@@ -205,10 +211,16 @@ struct AstroApp();
 pub type IdRange = (Bound<Id>, Bound<Id>);
 
 pub const ALL_ROCKS : IdRange = (Included(Id::Rock(0)), Included(Id::Rock(100)));
+pub const ALL_SHOTS : IdRange = (Included(Id::Shot(0)), Included(Id::Shot(100)));
 
 pub fn no_events<A, B>() -> (Vec<A>, Vec<B>) {
     (Vec::new(), Vec::new())
 }
+
+//struct RenderState {
+//    pub sound_events: Vec<SoundEvent>,
+//
+//}
 
 impl App for AstroApp {
     type Id = Id;
@@ -237,17 +249,24 @@ impl App for AstroApp {
     }
 
     fn simulate(time:Tick, entities:&TreeMap<Self::Id, Self::Entity>, id: &Self::Id, entity: &Self::Entity) -> (Vec<Self::EntityEvent>, Vec<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>) {
+        use puck_core::app::Event::*;
         use Entity::*;
+        use EntityEvent::*;
         match entity {
             &Game { score, level } => {
-                let rock_count = entities.range(ALL_ROCKS).count();
-                if let (Some(&Entity::Actor(player)), 0) = (entities.get(&Id::Player), rock_count) {
-                    let spawn_rocks = create_rocks(level + 6, player.pos, 100.0, 250.0).into_iter().map(|(id, entity)| {
-                        Event::SpawnEvent(id, entity)
-                    }).collect();
-                    (vec![EntityEvent::IncreaseLevel], spawn_rocks)
+                if let Some(&Entity::Actor(player)) = entities.get(&Id::Player) {
+                    let rock_count = entities.range(ALL_ROCKS).count();
+                    if rock_count == 0 {
+                        let spawn_rocks = create_rocks(level + 6, player.pos, 100.0, 250.0).into_iter().map(|(id, entity)| {
+                            Event::SpawnEvent(id, entity)
+                        }).collect();
+                        (vec![IncreaseLevel], spawn_rocks)
+                    } else {
+                        no_events()
+                    }
                 } else {
-                    no_events()
+                    // no player
+                    (vec![], vec![SpawnEvent(Id::Player, Entity::Actor(create_player()))])
                 }
             },
             &Actor(ref actor) => {
@@ -269,7 +288,38 @@ impl RenderedApp for AstroApp {
     }
 
     fn render(time: RenderTick, dimensions: &Dimensions, entities:&TreeMap<Self::Id, Self::Entity>, render_state: &mut Self::RenderState, renderer: &mut OpenGLRenderer) -> SoundRender {
+        use Entity::*;
+        use ActorKind::*;
+
         renderer.clear_depth_and_color(Color::BLACK);
+
+        let tesselator = GeometryTesselator::new(Vec3::new(1.0, 1.0, 1.0));
+        let mut verticies = Vec::new();
+
+        let atlas = TextureAtlas {
+            texture_size: 512,
+            tile_size: 32,
+        };
+        let rock = atlas.at(0, 0);
+        let shot = atlas.at(0, 1);
+        let player = atlas.at(0, 2);
+
+        for (id, e) in entities {
+            match e {
+                &Game { level, score } => {
+
+                },
+                &Actor(actor) => {
+                    let tex = match actor.kind {
+                        Shot => shot,
+                        Player => player,
+                        Rock => rock,
+                    };
+
+                    tesselator.draw_floor_centre_anchored_rotated_at(&mut verticies, &tex, vec3(actor.pos.x as f64, 0.0, actor.pos.y as f64), actor.facing as f64, 0.0);
+                },
+            }
+        }
 
 
         renderer.finish_frame();

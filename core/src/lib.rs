@@ -40,6 +40,7 @@ pub type Mat4 = cgmath::Matrix4<f64>;
 
 pub type HashMap<K, V> = fnv::FnvHashMap<K, V>;
 pub type HashSet<K> = fnv::FnvHashSet<K>;
+pub type TreeMap<K, V> = std::collections::BTreeMap<K, V>;
 
 pub fn clamp<T : PartialOrd>(n:T, min:T, max:T) -> T {
     if n < min {
@@ -73,6 +74,15 @@ macro_rules! hashset {
 macro_rules! hashmap {
     ($( $key: expr => $val: expr ),*) => {{
          let mut map = HashMap::default();
+         $( map.insert($key, $val); )*
+         map
+    }}
+}
+
+#[macro_export]
+macro_rules! treemap {
+    ($( $key: expr => $val: expr ),*) => {{
+         let mut map = TreeMap::new();
          $( map.insert($key, $val); )*
          map
     }}
