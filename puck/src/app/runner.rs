@@ -7,7 +7,7 @@ use std::collections::BTreeMap as TreeMap;
 use render::gfx::{Renderer, construct_opengl_renderer};
 
 use {PuckResult, FileResources, RenderTick};
-use puck_core::app::{SimSettings};
+use puck_core::app::{IdSeed, SimSettings};
 use puck_core::event::*;
 use puck_core::Tick;
 use super::{RenderedApp, RenderSettings};
@@ -33,6 +33,7 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
     // start file watcher
     // start sound worker
 
+    let mut id_seed : IdSeed = 0;
 
     let mut rs = render_state;
 
@@ -89,12 +90,17 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
                 match ev  {
                     Event::Shutdown => running = false,
                     Event::SpawnEvent(id, entity) => {
-                        last_entities.insert(id, entity);
-                        ()
+                        let use_id = match RA::modify_id(&id, id_seed) {
+                            Some(new_id) => {
+                                id_seed += 1; // seed was consumed to generate the id, increment it
+                                new_id
+                            },
+                            None => id,
+                        };
+                        last_entities.insert(use_id, entity);
                     },
                     Event::Delete(id) => {
                         last_entities.remove(&id);
-                        ()
                     },
                     Event::DeleteRange(from, to) => {
                         let mut to_delete = Vec::new();
@@ -129,10 +135,11 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
                 let mut combined_sink = CombinedSink::empty();
                 RA::simulate(simulate_tick, &last_entities, id, &entity, &mut combined_sink);
 
-                to_route.append(&mut combined_sink.routed);
+
+                to_route.append(&mut combined_sink.routed.events);
 
                 // handle self effects immediately
-                for event in &combined_sink.mine {
+                for event in &combined_sink.mine.events {
                     let mut sink = Sink::empty();
                     RA::handle_entity_event(event, id, &mut entity, &mut sink);
                     to_route.append(&mut sink.events);

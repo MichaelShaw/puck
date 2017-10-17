@@ -23,6 +23,10 @@ impl<A> Sink<A> {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.events.clear()
+    }
+
     pub fn push(&mut self, a: A) {
         self.events.push(a);
     }
@@ -36,15 +40,20 @@ impl<A> Sink<A> {
 }
 
 pub struct CombinedSink<A, B> {
-    pub mine: Vec<A>,
-    pub routed: Vec<B>,
+    pub mine: Sink<A>,
+    pub routed: Sink<B>,
 }
 
 impl<A, B> CombinedSink<A, B> {
+    pub fn clear(&mut self) {
+        self.mine.clear();
+        self.routed.clear();
+    }
+
     pub fn empty() -> CombinedSink<A, B> {
         CombinedSink  {
-            mine: Vec::new(),
-            routed: Vec::new(),
+            mine: Sink::empty(),
+            routed: Sink::empty(),
         }
     }
 }

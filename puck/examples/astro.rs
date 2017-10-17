@@ -12,7 +12,7 @@ use cgmath::{Zero, InnerSpace, vec3, vec2, Rad};
 use std::f64::consts::PI;
 
 use puck_core::{Vec2f, Vec3f, Vec3, Tick, HashMap, TreeMap, Color, clamp};
-use puck_core::app::{App, SimSettings};
+use puck_core::app::{App, SimSettings, IdSeed};
 use puck_core::event::*;
 
 use puck::app::{RenderedApp, RenderSettings};
@@ -249,6 +249,10 @@ impl App for AstroApp {
     type Entity = Entity; // do we need Eq?
     type EntityEvent = EntityEvent;
     type RenderEvent = SoundEvent;
+
+    fn modify_id(id: &Self::Id, seed_id: IdSeed) -> Option<Self::Id> {
+        None
+    }
 
     fn handle_entity_event(event:&Self::EntityEvent, id: &Self::Id, entity: &mut Self::Entity, sink: &mut Sink<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>) {
         use Entity::*;

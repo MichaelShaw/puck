@@ -20,6 +20,7 @@ pub struct SimSettings {
     pub tick_rate: u64,
 }
 
+pub type IdSeed = u64;
 
 pub trait App {
     type Id : Clone + Hash + Debug + Eq + Ord + Serialize + DeserializeOwned;
@@ -27,6 +28,7 @@ pub trait App {
     type EntityEvent : Clone + Debug + Serialize + DeserializeOwned;
     type RenderEvent : Clone + Debug + Serialize + DeserializeOwned;
 
+    fn modify_id(id: &Self::Id, seed: IdSeed) -> Option<Self::Id>;
     fn handle_entity_event(event:&Self::EntityEvent, id: &Self::Id, entity: &mut Self::Entity, sink: &mut Sink<Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>);
     fn simulate(time:Tick, entities:&TreeMap<Self::Id, Self::Entity>, id: &Self::Id, entity: &Self::Entity, sink: &mut CombinedSink<Self::EntityEvent, Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>);
 }
