@@ -1,7 +1,8 @@
 pub mod runner;
 
 //use puck_core::{HashMap, Tick};
-use puck_core::app::{Event, App, Sink};
+use puck_core::app::{App};
+use puck_core::event::*;
 use input::Input;
 use audio::SoundRender;
 

@@ -7,7 +7,8 @@ use std::collections::BTreeMap as TreeMap;
 use render::gfx::{Renderer, construct_opengl_renderer};
 
 use {PuckResult, FileResources, RenderTick};
-use puck_core::app::{SimSettings, Event, Sink, CombinedSink};
+use puck_core::app::{SimSettings};
+use puck_core::event::*;
 use puck_core::Tick;
 use super::{RenderedApp, RenderSettings};
 use std::collections::Bound::Included;

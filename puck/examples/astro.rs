@@ -12,7 +12,8 @@ use cgmath::{Zero, InnerSpace, vec3, vec2, Rad};
 use std::f64::consts::PI;
 
 use puck_core::{Vec2f, Vec3f, Vec3, Tick, HashMap, TreeMap, Color, clamp};
-use puck_core::app::{App, Event, SimSettings, Sink, CombinedSink};
+use puck_core::app::{App, SimSettings};
+use puck_core::event::*;
 
 use puck::app::{RenderedApp, RenderSettings};
 use puck::{FileResources, RenderTick, Input, Dimensions, Camera};
@@ -276,7 +277,7 @@ impl App for AstroApp {
     }
 
     fn simulate(time:Tick, entities:&TreeMap<Self::Id, Self::Entity>, id: &Self::Id, entity: &Self::Entity, sink: &mut CombinedSink<Self::EntityEvent, Event<Self::Id, Self::Entity, Self::EntityEvent, Self::RenderEvent>>)  {
-        use puck_core::app::Event::*;
+        use puck_core::event::Event::*;
         use Entity::*;
         use EntityEvent::*;
         use ActorKind::*;
