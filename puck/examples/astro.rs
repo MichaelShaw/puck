@@ -285,35 +285,35 @@ impl App for AstroApp {
                 if let Some(&Entity::Actor(player)) = entities.get(&Id::Player) {
                     let rock_count = entities.range(ALL_ROCKS).count();
                     if rock_count == 0 {
-                        sink.push_self(IncreaseLevel);
+                        sink.mine.push(IncreaseLevel);
                         let spawn_rocks : Vec<_> = create_rocks(level + 6, player.pos, 100.0, 250.0).into_iter().map(|(id, entity)| {
                             Event::SpawnEvent(id, entity)
                         }).collect();
                         for ev in spawn_rocks {
-                            sink.push_event(ev);
+                            sink.routed.push(ev);
                         }
                     }
                 } else {
                     // no player
-                    sink.push_event(SpawnEvent(Id::Player, Entity::Actor(create_player())));
+                    sink.routed.push(SpawnEvent(Id::Player, Entity::Actor(create_player())));
                 }
             },
             &Actor(ref actor) => {
-                sink.push_self(update_physics(actor, time.tick_duration as f32, 640.0, 480.0));
+                sink.mine.push(update_physics(actor, time.tick_duration as f32, 640.0, 480.0));
                 match actor.kind {
                     Player => {
                         if actor.shooting && actor.life <= 0.0 {
                             let shot_velocity = vec_from_angle(actor.facing) * SHOT_SPEED;
                             let shot = create_shot(actor.pos, actor.facing, shot_velocity);
-                            sink.push_self(SetLife(PLAYER_LIFE));
+                            sink.mine.push(SetLife(PLAYER_LIFE));
                             let shot_id = entities.range(ALL_SHOTS).last().and_then(|(id,_)| id.next() ).unwrap_or(Id::Shot(0));
-                            sink.push_event(SpawnEvent(shot_id, Entity::Actor(shot)));
+                            sink.routed.push(SpawnEvent(shot_id, Entity::Actor(shot)));
                         } else {
-                            sink.push_self(update_life(actor, time.tick_duration as f32));
+                            sink.mine.push(update_life(actor, time.tick_duration as f32));
                         }
                     },
                     Rock => (),
-                    Shot => sink.push_self(update_life(actor, time.tick_duration as f32)),
+                    Shot => sink.mine.push(update_life(actor, time.tick_duration as f32)),
                 }
             },
         }
@@ -370,7 +370,6 @@ impl RenderedApp for AstroApp {
                         Player => player,
                         Rock => rock,
                     };
-
                     tesselator.draw_floor_centre_anchored_rotated_at(&mut verticies, &tex, vec3(actor.pos.x as f64, 0.0, actor.pos.y as f64), actor.facing as f64, 0.0);
                 },
             }

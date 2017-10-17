@@ -128,10 +128,10 @@ pub fn run<RA>(file_resources:FileResources, sim_settings: SimSettings, render_s
                 let mut combined_sink = CombinedSink::empty();
                 RA::simulate(simulate_tick, &last_entities, id, &entity, &mut combined_sink);
 
-                to_route.append(&mut combined_sink.events);
+                to_route.append(&mut combined_sink.routed);
 
                 // handle self effects immediately
-                for event in &combined_sink.self_events {
+                for event in &combined_sink.mine {
                     let mut sink = Sink::empty();
                     RA::handle_entity_event(event, id, &mut entity, &mut sink);
                     to_route.append(&mut sink.events);

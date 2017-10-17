@@ -37,9 +37,11 @@ impl<A> Sink<A> {
             events: Vec::new()
         }
     }
+
     pub fn push(&mut self, a: A) {
         self.events.push(a);
     }
+
     pub fn push_opt(&mut self, a: Option<A>) {
         match a {
             Some(a) => self.push(a),
@@ -49,26 +51,16 @@ impl<A> Sink<A> {
 }
 
 pub struct CombinedSink<A, B> {
-    pub self_events: Vec<A>,
-    pub events: Vec<B>,
+    pub mine: Vec<A>,
+    pub routed: Vec<B>,
 }
 
 impl<A, B> CombinedSink<A, B> {
     pub fn empty() -> CombinedSink<A, B> {
         CombinedSink  {
-            self_events: Vec::new(),
-            events: Vec::new(),
+            mine: Vec::new(),
+            routed: Vec::new(),
         }
-    }
-
-
-
-    pub fn push_self(&mut self, a: A) {
-        self.self_events.push(a);
-    }
-
-    pub fn push_event(&mut self, b: B) {
-        self.events.push(b);
     }
 }
 
